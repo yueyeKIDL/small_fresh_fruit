@@ -18,7 +18,7 @@ class Fruiter(models.Model):
 
 
 remind_repeat_choices = (
-    ("no", "无"),
+    ("no", "单次"),
     ("weekdays", "工作日"),
     ("daily", "每天"),
     ("weekly", "每周"),

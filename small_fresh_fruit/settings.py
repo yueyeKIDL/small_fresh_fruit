@@ -14,11 +14,7 @@ import os
 import sys
 
 SMALL_FRESH_FRUIT_DEBUG = False
-
-# 微信管理员昵称
-# ADMIN_WECHAT_NICKNAME = '小鲜果儿'
-# ADMIN_WECHAT_NICKNAME = '月夜yueyeKIDL'
-# ADMIN_WECHAT_NICKNAME = '火力全开'
+CENTOS7_DEBUG = True
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 
@@ -93,7 +89,7 @@ if SMALL_FRESH_FRUIT_DEBUG:
     PASSWORD = 'root'
 else:
     # 生产服务器
-    PASSWORD = 'rootroot'
+    PASSWORD = ''
 
 DATABASES = {
     'sqlite3': {
