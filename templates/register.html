@@ -1,0 +1,498 @@
+{% load staticfiles %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>login</title>
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'bootstrap-3.3.7-dist/css/bootstrap.min.css' %}">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <script src="{% static 'js/jquery-2.1.1.min.js' %}"></script>
+    <script src="{% static 'bootstrap-3.3.7-dist/js/bootstrap.min.js' %}"></script>
+
+
+</head>
+<body>
+<script>
+
+    //方法
+    function warningBox(self, element_id) {
+        //警告框样式---输入框变红、显示x
+        $(self).css("color", "darkred");
+        $(element_id).attr("class", "form-group has-error has-feedback");
+        $(element_id).find("span").eq(1).attr("class", "glyphicon glyphicon-remove form-control-feedback");
+    }
+
+    function successBox(element_id) {
+        //通过框样式---输入框变绿、挑√
+        $(element_id).attr("class", "form-group has-success has-feedback");
+        $(element_id).find("span").eq(1).attr("class", "glyphicon glyphicon-ok form-control-feedback");
+    }
+
+    function regularBox(self, element_id) {
+        //常规框样式
+        $(self).css("color", "");
+        $(element_id).attr("class", "form-group");
+        $(element_id).find("span").eq(1).attr("class", "sr-only");
+    }
+
+
+    //DOM加载
+    $(document).ready(function () {
+        const login_name_error = "账号不能为空";
+        const pwd_error = "密码不能为空";
+        const wechat_nickname_error = "微信昵称不能为空";
+        const wechat_code_error = "验证码不能为空";
+        const wechat_nickname_conflict = "该微信已注册";
+        const wechat_nickname_repeat = "微信昵称重名";
+        const wechat_nickname_error2 = "昵称错误";
+
+        //控制验证频率
+        let input_username_status = 0;
+        let input_pwd_status = 0;
+        let input_pwd2_status = 0;
+        let input_wechat_status = 0;
+        let input_identify_code_status = 0;
+
+        //6位随机验证码
+        let wechat_code = "";
+
+        //获取验证码间隔时间
+        const countdown_init = 60;
+        let countdown = 60;
+
+        $("form input").on("change", function () {
+            var element_id = $(this).attr("id");
+            if (element_id === "inputUserName") {
+                input_username_status = 1;
+            } else if (element_id === "inputPassword") {
+                input_pwd_status = 1;
+            } else if (element_id === "inputPassword2") {
+                input_pwd2_status = 1;
+            } else if (element_id === "inputWeChat") {
+                //微信昵称更改，验证码清空
+                wechat_code = "";
+                input_wechat_status = 1;
+            } else if (element_id === "identifyCode") {
+                input_identify_code_status = 1;
+            }
+
+        });
+
+
+        $("form").submit(function () {
+                //首先执行需要把blur方法执行一遍，这样显示的错误信息 然后记录错误信息的长度 只要长度大于0就阻止提交
+                $("form input").trigger("blur");
+                if (!$('#checkbox-id').is(':checked')) {
+                    $("#fruit-rule-danger").css("display", "block");
+                    return false;
+                } else if ($(".has-error").length > 0) {
+                    return false;
+                }
+            }
+        );
+
+        $('#checkbox-id').click(function () {
+            $("#fruit-rule-danger").css("display", "none");
+        });
+
+        //校验验证码
+        $("#identifyCode").blur(function () {
+            var input_wechat_code = $(this).val();
+            //为空
+            if (input_wechat_code === "") {
+                $(this).css("color", "darkred").val(wechat_code_error);
+                warningBox(this, "#validate-identify-code");
+            } else if (input_identify_code_status === 1) {
+                console.log('into');
+                //校验微信验证码是否正确
+                if (wechat_code && input_wechat_code === wechat_code) {
+                    console.log('success');
+                    $(this).css("color", "black");
+                    successBox("#validate-identify-code");
+                } else if (!wechat_code) {
+                    console.log('!wechat_code');
+                    warningBox(this, "#validate-identify-code");
+                } else {
+                    console.log('else');
+                    warningBox(this, "#validate-identify-code");
+                }
+            } else if (input_identify_code_status === 0 && $("#validate-identify-code").attr("class") !== "form-group has-success has-feedback") {
+                warningBox(this, "#validate-identify-code");
+                console.log('!wechat_code');
+            }
+            input_identify_code_status = 0;
+        });
+
+        $("#identifyCode").focus(function () {
+            var input_wechat_code = $(this).val();
+            if (input_wechat_code === wechat_code_error) {
+                $(this).val("");
+                regularBox(this, "#validate-identify-code");
+            }
+
+        });
+
+
+        //获取验证码倒计时
+
+        function settime(obj) {
+            if (countdown === 0) {
+                wechat_code = "";
+                obj.attr({'disabled': false, "class": "btn btn-primary"}).html("获取验证码");
+                countdown = countdown_init;
+                return;
+            } else if (countdown < 10) {
+                obj.html("重新获取(0" + countdown + ")");
+                countdown--;
+            } else {
+                obj.html("重新获取(" + countdown + ")");
+                countdown--;
+            }
+            setTimeout(function () {
+                    settime(obj);
+                }
+                , 1000)
+        }
+
+        //获取验证码到微信
+        $("#sendWechatCode").click(function () {
+            var self = this;
+            var chat_name = $("#inputWeChat").val();
+            $("#inputWeChat").trigger("blur");
+            if ($("#validate-wechat").attr("class") === "form-group has-success has-feedback") {
+                $(self).attr("disabled", true).html("重新获取(" + countdown + ")");
+                $.post(
+                    "{% url 'send_wechat_code' %}",
+                    {chat_name: chat_name},
+                    function (data) {
+                        if (data['code'] === 'ok') {
+                            $(self).attr("class", "btn btn-success");
+                            wechat_code = data['wechat_code'];
+                            settime($(self));
+
+                        } else {
+                            $(self).attr("class", "btn btn-danger");
+                            $(self).html("服务器错误");
+                        }
+                    },
+                    "json");
+            }
+        });
+
+
+        //微信昵称
+        $("#inputWeChat").blur(function () {
+            var self = this;
+            var wechat_nickname = $(this).val();
+            //为空
+            if (wechat_nickname === "") {
+                {#$("#sendWechatCode").attr("disabled", true);#}
+                $(this).css("color", "darkred").val(wechat_nickname_error);
+                warningBox(this, "#validate-wechat");
+            } else if (input_wechat_status === 1) {
+                $.post(
+                    "{% url 'check_wechat_nickname' %}",
+                    {chat_name: wechat_nickname},
+                    function (data) {
+                        if (data['code'] === 'ok') {
+                            //通过
+                            $("#sendWechatCode").removeAttr("disabled");
+                            successBox("#validate-wechat");
+                        } else if (data['code'] === 'conflict') {
+                            $("#inputWeChat").val(wechat_nickname + "   " + wechat_nickname_conflict).css("color", "darkred");
+                            warningBox(self, "#validate-wechat");
+                            //账号通过
+                            //successBox("#validate-login-name");
+                        } else if (data['code'] === 'repeat') {
+                            $("#inputWeChat").val(wechat_nickname + "   " + wechat_nickname_repeat).css("color", "darkred");
+                            warningBox(self, "#validate-wechat");
+                            //账号通过
+                            //successBox("#validate-login-name");
+                        }else if (data['code'] === 'error') {
+                            $("#inputWeChat").val(wechat_nickname + "   " + wechat_nickname_error2).css("color", "darkred");
+                            warningBox(self, "#validate-wechat");
+                        }
+                    },
+                    "json");
+            } else if (input_wechat_status === 0 && $("#validate-wechat").attr("class") !== "form-group has-success has-feedback") {
+                warningBox(this, "#validate-wechat");
+            }
+            input_wechat_status = 0;
+        });
+
+        $("#inputWeChat").focus(function () {
+            var wechat_nickname = $(this).val();
+            var input_list = wechat_nickname.split(" ");
+            if (input_list.length > 1) {
+                //昵称错误
+                $(this).val(input_list[0]);
+                regularBox(this, "#validate-wechat");
+            } else if (wechat_nickname === wechat_nickname_error) {
+                //昵称为空
+                $(this).val("");
+                regularBox(this, "#validate-wechat");
+            } else if ($("#sendWechatCode").attr("class") === "btn btn-danger") {
+                //获取按钮500警告清除
+                $("#sendWechatCode").attr("class", "btn btn-primary").html('获取验证码');
+            }
+
+        });
+
+
+        $("#inputPassword2").blur(function () {
+            var pwd = $("#inputPassword").val();
+            var pwd2 = $(this).val();
+            //密码为空
+            if (pwd2 === "") {
+                $(this).attr("type", "text").css("color", "darkred").val(pwd_error);
+                warningBox(this, "#validate-pwd2");
+            } else if (input_pwd2_status === 1) {
+                if (pwd !== pwd2) {
+                    //两次密码输入不一致
+                    $(this).attr("type", "text").css("color", "darkred").val(" 两次密码输入不一致");
+                    warningBox(this, "#validate-pwd2");
+                } else if (input_pwd2_status === 0 && $("#validate-pwd2").attr("class") !== "form-group has-success has-feedback") {
+                    warningBox(this, "#validate-pwd2");
+                } else {
+                    //密码通过
+                    successBox("#validate-pwd2");
+                    $(this).css("color", "black");
+                }
+            }
+            input_pwd2_status = 0;
+        });
+
+
+        $("#inputPassword2").focus(function () {
+            var pwd2 = $(this).val();
+            var input_list = pwd2.split(" ");
+            $(this).attr("type", "password");
+            //密码为空样式清除， 密码不符合校验样式清除
+            if (pwd2 === pwd_error || input_list.length > 1) {
+                $(this).val("").attr("type", "password");
+                regularBox(this, "#validate-pwd2");
+            }
+
+        });
+
+
+        $("#inputPassword").blur(function () {
+            var pwd = $(this).val();
+            //密码为空
+            if (pwd === "") {
+                $(this).attr("type", "text").css("color", "darkred").val(pwd_error);
+                warningBox(this, "#validate-pwd");
+            } else if (input_pwd_status === 1) {
+                if (!(/^.{6,16}$/).test(pwd)) {
+                    //密码不符合校验
+                    $(this).attr("type", "text").css("color", "darkred").val(" 密码为6~16位数字、字母和符号组成");
+                    warningBox(this, "#validate-pwd");
+                } else if (input_pwd_status === 0 && $("#validate-pwd").attr("class") !== "form-group has-success has-feedback") {
+                    warningBox(this, "#validate-pwd");
+                } else {
+                    //密码通过
+                    successBox("#validate-pwd");
+                }
+            }
+            input_pwd_status = 0;
+        });
+
+        $("#inputPassword").focus(function () {
+            var pwd = $(this).val();
+            var input_list = pwd.split(" ");
+            //密码为空样式清除， 密码不符合校验样式清除
+            if (pwd === pwd_error || input_list.length > 1) {
+                $(this).val("").attr("type", "password");
+                regularBox(this, "#validate-pwd");
+            }
+
+        });
+
+
+        $("#inputUserName").blur(function () {
+            var login_name = $(this).val();
+            //账号为空
+            if (login_name === "") {
+                $(this).css("color", "darkred").val(login_name_error);
+                warningBox(this, "#validate-login-name");
+            } else if (input_username_status === 1) {
+                if (!(/^[A-Za-z0-9_]{6,16}$/).test(login_name)) {
+                    //账号不符合校验规则
+                    $(this).css("color", "darkred").val(login_name + "   账号为6~16位数字、字母和下划线组成");
+                    warningBox(this, "#validate-login-name");
+                } else {
+                    //账号是否注册查询
+                    $("#inputUserName").css("color", "");
+                    var self = this;
+                    $.post(
+                        "{% url 'check_login_name' %}",
+                        {login_name: login_name},
+                        function (data) {
+                            var res = data['code'];
+                            //账号已注册
+                            if (res === 'error') {
+                                $(self).css("color", "darkred").val(login_name + "   该账号已注册");
+                                warningBox(self, "#validate-login-name");
+                            } else {
+                                //账号通过
+                                successBox("#validate-login-name");
+                            }
+                        },
+                        "json");
+
+                }
+            } else if (input_username_status === 0 && $("#validate-login-name").attr("class") !== "form-group has-success has-feedback") {
+                //校验未通过，用户不做更改，继续红叉提示
+                warningBox(this, "#validate-login-name");
+            }
+            input_username_status = 0;
+        });
+
+        $("#inputUserName").focus(function () {
+            var login_name = $(this).val();
+            var input_list = login_name.split(" ");
+            if (login_name === login_name_error) {
+                //清除账号为空的样式
+                $(this).val("");
+                regularBox(this, "#validate-login-name");
+            } else if (input_list.length > 1) {
+                //清除账号不通过的样式
+                $(this).val(input_list[0]);
+                regularBox(this, "#validate-login-name");
+            }
+
+        });
+    });
+</script>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-4 col-md-offset-4 off">
+            <div class="page-header">
+                <a href="/admin/" style="text-decoration: none;">
+                    <h3 style="color: orangered;">
+                        &nbsp;&nbsp;今儿吸果了没 (●'◡'●)~&nbsp;
+                        <button type="button" class="btn btn-danger">
+                            <span class="glyphicon glyphicon-apple" aria-hidden="true"></span> 登 录
+                        </button>
+                    </h3>
+                </a>
+            </div>
+        </div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-md-4 col-md-offset-4 off">
+            <form class="form-horizontal" action="{% url 'register' %}" method="post">
+                {% csrf_token %}
+
+                <div id="validate-login-name" class="form-group">
+                    {#                    <label for="inputUserName" class="col-md-2 control-label">账号</label>#}
+                    <div class="col-md-10">
+                        <div class="input-group">
+                            <span class="input-group-addon glyphicon glyphicon-user" aria-hidden="true"></span>
+                            <input type="text" name="username" class="form-control" id="inputUserName" maxlength="16"
+                                   placeholder="请输入您的账号">
+                            <span class="glyphicon glyphicon-ok form-control-feedback sr-only"
+                                  aria-hidden="true"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="validate-pwd" class="form-group">
+                    {#                    <label for="inputPassword" class="col-md-2 control-label">密码</label>#}
+                    <div class="col-md-10">
+                        <div class="input-group">
+                            <span class="input-group-addon glyphicon glyphicon-lock" aria-hidden="true"></span>
+                            <input type="password" name="password" class="form-control" id="inputPassword"
+                                   maxlength="16"
+                                   placeholder="请输入您的密码">
+                            <span class="glyphicon glyphicon-ok form-control-feedback sr-only"
+                                  aria-hidden="true"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="validate-pwd2" class="form-group">
+                    {#                    <label for="inputPassword2" class="col-md-2 control-label">确认密码</label>#}
+                    <div class="col-md-10">
+                        <div class="input-group">
+                            <span class="input-group-addon glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                            <input type="password" name="password2" class="form-control" id="inputPassword2"
+                                   maxlength="16"
+                                   placeholder="请再次输入密码">
+                            <span class="glyphicon glyphicon-ok form-control-feedback sr-only"
+                                  aria-hidden="true"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="validate-wechat" class="form-group">
+                    {#                    <label for="inputWeChat" class="col-md-2 control-label">微信昵称</label>#}
+                    <div class="col-md-10">
+                        <div class="input-group">
+                            <span class="input-group-addon glyphicon glyphicon-globe" aria-hidden="true"></span>
+                            <input type="text" name="wechat_nickname" class="form-control" id="inputWeChat"
+                                   maxlength="21"
+                                   placeholder="请输入微信昵称">
+                            <span class="glyphicon glyphicon-ok form-control-feedback sr-only"
+                                  aria-hidden="true"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="validate-identify-code" class="form-group">
+                    <div class="col-md-10">
+                        <div class="input-group">
+                            <span class="input-group-addon glyphicon glyphicon-send" aria-hidden="true"></span>
+
+                            <input type="text" name="wechat_code" class="form-control" id="identifyCode"
+                                   maxlength="6"
+                                   placeholder="请输入验证码">
+                            <span id="wechat-code-glyphicon"
+                                  class="glyphicon glyphicon-ok form-control-feedback sr-only"
+                                  aria-hidden="true"></span>
+                            <span class="input-group-btn">
+                                <button id="sendWechatCode" class="btn btn-primary" type="button" style="width: 102px">获取验证码</button>
+                            </span>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-md-10">
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" id="checkbox-id" name="fruit_rule">我已阅读并同意遵守<a
+                                    href="{% url 'fruit_rule' %}"
+                                    target="_blank"> 小鲜果儿法则</a>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-10">
+                        <div style="display: none" id="fruit-rule-danger">
+                            <div class="alert alert-danger alert-dismissible" role="alert" style="text-align: center">
+                                请自觉遵守 <a class="alert-link" style="text-decoration: none"> &nbsp;&nbsp;法则哦~ (*^▽^*)
+                                &nbsp;&nbsp;</a>这是我们的态度
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-10">
+                        <button type="submit" class="btn btn-primary btn-lg col-md-12 col-xs-12">注 册</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+</body>
+</html>
