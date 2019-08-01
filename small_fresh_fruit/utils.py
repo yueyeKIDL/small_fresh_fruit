@@ -48,15 +48,32 @@ def generate_reminder_img(title, dear, msg, content, fruiter_account):
         # content = '月夜小鲜果儿凑字数技巧哦外交纠纷为为杰佛微积分辛苦破线情况我请客可千万都气我记得请我发情期觉得委屈'
 
         BASE_DIR = settings.BASE_DIR
-        # 图片模板
-        img = os.path.join(BASE_DIR, r'media\reminder\base_img\timg.png')
 
-        # 新图片
-        new_img = os.path.join(BASE_DIR, r'media\reminder\imgs\{}_{}_remind.png'.format(fruiter_account,
-                                                                                        datetime.now().strftime(
-                                                                                            '%Y%m%d%H%M%S')))
-        # 字体
-        font_type = os.path.join(BASE_DIR, r'media\reminder\fonts\small_fresh_fruit.TTF')
+        # 兼容Centos7
+        if settings.CENTOS7_DEBUG is True:
+
+            # 图片模板
+            img = os.path.join(BASE_DIR, *['media', 'reminder', 'base_img', 'timg.png'])
+
+            # 新图片
+            new_img = os.path.join(BASE_DIR, *['media', 'reminder', 'imgs', '{}_{}_remind.png'.format(fruiter_account,
+                                                                                                      datetime.now().strftime(
+                                                                                                          '%Y%m%d%H%M%S'))])
+            # 字体
+            font_type = os.path.join(BASE_DIR, r'small_fresh_fruit.TTF')
+
+        # 兼容Windows
+        else:
+
+            # 图片模板
+            img = os.path.join(BASE_DIR, r'media\reminder\base_img\timg.png')
+
+            # 新图片
+            new_img = os.path.join(BASE_DIR, r'media\reminder\imgs\{}_{}_remind.png'.format(fruiter_account,
+                                                                                            datetime.now().strftime(
+                                                                                                '%Y%m%d%H%M%S')))
+            # 字体
+            font_type = os.path.join(BASE_DIR, r'media\reminder\fonts\small_fresh_fruit.TTF')
         font = ImageFont.truetype(font_type, 28)
         title_color = "red"
         color = "#000000"

@@ -38,15 +38,6 @@ class QuestionMethodTests(TestCase):
         t_, amount, minutes, *tomato_name = tomato_bell_reply.split()
         tomato_name = ' '.join(tomato_name)
         self.assertIs(tomato_name, '清华东区网红好的欠我一千万，都为技巧哦为绝地枪王为我就去玩为偶奇气温会丢失富瀚微，绯闻红为和非为违反为我覅偶还未发货未of维护')
-    #
-    # def test_return_correct_space(self):
-    #     """
-    #     测试返回内容是否一致空格
-    #     """
-    #     tomato_bell_reply = 'fqz 2 15 清华东区网红好的欠我一千万 都为技巧哦为绝地枪王为我就去玩为偶奇气温会丢失富瀚微  绯闻红为和我覅偶还未待确定未群多群发货未of维护'
-    #     t_, amount, minutes, *tomato_name = tomato_bell_reply.split()
-    #     tomato_name = ' '.join(tomato_name)
-    #     self.assertIs(tomato_name, '清华东区网红好的欠我一千万 都为技巧哦为绝地枪王为我就去玩为偶奇气温会丢失富瀚微 绯闻红为和我覅偶还未待确定未群多群发货未of维护')
 
     def test_return_correct_ens_symbols(self):
         """
