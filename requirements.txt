@@ -2,7 +2,7 @@ APScheduler==3.5.3
 beautifulsoup4==4.7.1
 certifi==2019.3.9
 chardet==3.0.4
-Django==2.1.1
+Django==2.1.11
 django-apscheduler==0.2.13
 fake-useragent==0.1.11
 get==2018.11.19
