@@ -12,7 +12,7 @@ mysqlclient==1.4.2.post1
 Pillow==6.0.0
 post==2018.11.20
 public==2018.11.20
-PyJWT==1.7.1
+PyJWT==2.4.0
 pypng==0.0.19
 PyQRCode==1.2.1
 PySocks==1.6.8
